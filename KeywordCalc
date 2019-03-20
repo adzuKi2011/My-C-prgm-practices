@@ -1,0 +1,119 @@
+/*Í³¼ÆÊäÈëµÄÎÄ±¾ÖÐ¹Ø¼ü´ÊµÄ¸öÊý*/
+#include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
+#define MAX 999
+#define BUFFSIZE 100
+char buf[BUFFSIZE];
+int bufp=0;			//bufÏÂ±ê
+struct key{
+	char *keywordlist;
+	int keywordnum;
+}sweartab[MAX]={
+	"auto", 0,
+	"break", 0,
+	"double", 0,
+	"else", 0,
+	"float", 0,
+	"int", 0,
+	"long", 0,
+	"char", 0,
+	"const", 0,
+	"extern", 0,
+	"case", 0,
+	"for", 0,
+	/*etc*/
+};
+
+int getwords(char *, int);		//ÓÃÓÚ¶ÁÈ¡ÊäÈëÁ÷ÖÐµ¥´ÊµÄº¯Êý 
+int binsearch(struct key *, char *, int);		
+//ÕÛ°ë²éÕÒº¯Êý£¬Ñ°ÕÒsweartabÖÐºÍÊäÈë´ÊÏàÍ¬µÄÔªËØ, ·µ»Ø¸ÃÔªËØµÄÏÂ±ê 
+/*ÕâÀïµÚÒ»¸ö²ÎÊýÒ²ÊÇÖ¸Õë£¬ÊÇstruct keyÀàÐÍµÄÖ¸Õë*/ 
+
+/*keytabÖÐ¹Ø¼ü×ÖµÄ¸öÊý*/
+int keysum=(sizeof (sweartab))/(sizeof (struct key));
+/*int strcmp (char *a, char *b)
+{
+	int i;
+	for (i=0;*(a+i)&&*(b+i);i++)
+		if (*(a+i)!=*(b+i))
+			break;
+	return (*(a+i)==*(b+i)) ? 0 : ((*(a+i)-*(b+i)));
+}*/
+
+/*º¯ÊýÈë¿Ú*/
+int main (int argc, char **argv)
+{
+	int list, i;		//list£¬ÔªËØÏÂ±ê 
+	char word[MAX];		//´¢´æÒ»¸öµ¥´Ê 
+	while (getwords(word, MAX)!='\n'){		//×¢Òâ£¬ÕâÀïµÄwordÊÇÊý×éÃûËùÒÔÓÐ¿Õ¼ä´æ´¢×Ö·û´®	
+		if (isalpha(*word))
+			list=binsearch(sweartab, word, keysum);
+		if (list>=0)
+			sweartab[list].keywordnum++;
+	}
+	
+	for (i=0;i<keysum;i++)
+		printf("%s: %d\n",sweartab[i].keywordlist, sweartab[i].keywordnum);
+	return 0;
+}
+ 
+
+int getch(void)
+{
+	return (bufp>0) ? *( buf+(--bufp) ) : getchar();
+	/*Èç¹ûbuf²»ÊÇ¿ÕµÄ£¬¾Í·µ»ØÕ»¶¥ÏÂÃæµÄÄÇ²ã£¬Èç¹ûÊÇ¿ÕµÄ£¬¾Í½ÓÊÜÒ»¸ö¼üÅÌÊäÈë*/
+}
+
+void ungetch (char c)
+{
+	if (bufp>BUFFSIZE)
+		printf ("ungetch:too many char\n");
+	else 		 
+		*(buf+(bufp++))=c;		//Èç¹ûbufÃ»Âú£¬¾Í½«º¯Êý²ÎÊý´æ´¢½øbuf 
+}
+
+/*¶ÁÈ¡ÊäÈëµÄÒ»¸öµ¥´Ê*/
+int getwords(char *word, int lim)	
+{		//²ÎÊý£ºÊý×éµÄµØÖ·£¬Êý×é³¤¶ÈµÄÉÏÏÞ 
+	int c, i=0;
+	char *last=word;	//Ö¸ÏòÊý×é¸÷¸öÔªËØµÄÖ¸Õë 
+	while (isspace(c=getch()))
+		;		//Ìø¹ý¿Õ°×Êä³ö 
+	if (c!= '\n')	//µÚÒ»¸ö·Ç¿Õ°×Êä³ö 
+		*last++=c;		//ÕâÀï½«ÊäÈëµÄ·Ç¿Õ°××Ö·ûËÍ¸øÁËµ±Ç°Ö¸ÕëÎ»ÖÃ²¢½«Ö¸ÕëºóÒÆÁËÒ»Î» 
+	if (!isalpha(c)){	//Èç¹ûc²»ÊÇ×ÖÄ¸ 
+		*last='\0';		//½áÊø×Ö·û´® 
+		return c;		//·µ»Øc¼´·µ»Ø×îºó½ÓÊÕµ½µÄÊäÈë×Ö·û 
+	}					//Èç¹ûcÊÇ×ÖÄ¸ 
+	for (; --lim>0; last++)
+		if (!isalnum(*last=getch())){	//isalnum(int), ÅÐ¶ÏÊÇ·ñÊÇÊý×Ö¡¢´óÐ¡Ð´×ÖÄ¸£¬Ïàµ±ÓÚisalpha(int)||isdigit(int), µ±ÕæÊ±·µ»Ø·ÇÁã£¬·ñÔò·µ»Ø0 
+		//È¡ÏÂÒ»¸öÊäÈëµÄ×Ö·û£¬Èô²»ÊÇ×ÖÄ¸»òÊý×ÖÄÇÃ´½«¸Ã×Ö·û·ÅÈë»º³åÇø²¢Ìø³öÑ­»· 
+			ungetch(*last);	//Ã¿´ÎÓÃgetch»ñµÃÒ»¸ö×Ö·û´æÈëwordÊý×éÅÐ¶ÏÊÇ²»ÊÇ×ÖÄ¸Êý×Ö£¬²»ÊÇÔò·Å»Ø»º³åÇø£¬²¢ÍË³öÑ­»· 
+			break;
+		}
+	*last = '\0';	//ÓÃ0½áÊø×Ö·û´® 
+	return *word;	//·µ»Ø¸Ãµ¥´ÊµÄÊ××ÖÄ¸ 
+}
+
+/*ÕÛ°ë²éÕÒº¯Êý, ²ÎÊý£º½á¹¹×Ö·ûµØÖ·£¬Ä¿±ê×Ö·û´®µØÖ·£¬½á¹¹Êý×éÔªËØ¸öÊý, 
+·µ»ØºÍ½á¹¹×Ö·û´®ÁÐ±êÏàÍ¬µÄ½á¹¹Êý×éÏÂ±ê*/
+ int binsearch (struct key *tab, char *s, int len)
+{
+ 	int bot, top, mid, flag;
+ 	bot=0;
+ 	top=len-1;
+ 	mid=(bot+top)/2;
+ 	while (bot<=top){
+ 		flag=strcmp((tab+mid)->keywordlist, s); 	//±È½ÏÁÐ±íÖÐ×Ö·û´®ºÍword×Ö·û´® 
+ 		if (flag>0){ //tab[mid]>s, Ä¿±ê×Ö·û´®ÔÚÖÐ¼äÉÏÃæ 
+ 			top=mid-1;
+		}
+		else if (flag<0)
+			bot=mid+1;
+		else
+			return mid;
+ 	}
+ 	return -1;
+}
